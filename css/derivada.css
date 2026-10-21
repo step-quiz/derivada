@@ -1,0 +1,177 @@
+/*
+============================================================================
+PROJECTE: derivada (Step Quiz, vanilla JS)
+FITXER: css/derivada.css
+ROL: Estils de «Derivada en un punt»: tokens propis (extenen css/tokens.css,
+     que és el de camina sense tocar), capçalera, escena, gràfica, instruments,
+     targeta d'instruccions, registre, mode projector i impressió (negre sobre
+     blanc, A4, marges de 15 mm, només gràfica + taula).
+DEPENDÈNCIES: css/tokens.css (es carrega abans).
+============================================================================
+*/
+:root {
+    --d-secant: #be185d;
+    --d-tangent: #047857;
+    --d-marcador: #b45309;
+    --d-t-llis: #d6d3d1;
+    --d-t-gel: #bae6fd;
+    --d-t-sorra: #fde68a;
+    --d-t-pedres: #d6d3d1;
+    --d-t-baixada: #bbf7d0;
+    --d-t-linia: #475569;
+    --d-obs: #4338ca;
+    --d-carreto: #b45309;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --d-secant: #f472b6;
+        --d-tangent: #6ee7b7;
+        --d-marcador: #fbbf24;
+        --d-t-llis: #44403c;
+        --d-t-gel: #0c4a6e;
+        --d-t-sorra: #78350f;
+        --d-t-pedres: #44403c;
+        --d-t-baixada: #14532d;
+        --d-t-linia: #cbd5e1;
+        --d-obs: #a5b4fc;
+        --d-carreto: #fbbf24;
+    }
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; padding: 12px 16px 32px; font-family: var(--lletra); font-size: 17px; line-height: 1.45; color: var(--text); background: var(--fons); }
+button, input, select { font: inherit; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.suau { color: var(--text-suau); }
+:focus-visible { outline: 3px solid var(--primari); outline-offset: 2px; }
+
+.capcalera, .modes, .etapes, .principal, .peu { max-width: 1200px; margin-left: auto; margin-right: auto; }
+.capcalera { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.capcalera h1 { margin: 0; font-size: 1.5em; color: var(--primari-fosc); }
+
+.btn { min-height: 44px; min-width: 44px; padding: 8px 16px; border: 1px solid var(--vora-panell); border-radius: var(--radi); background: var(--panell); color: var(--text); cursor: pointer; }
+.btn:hover:not(:disabled) { border-color: var(--primari); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-primari { background: var(--primari); border-color: var(--primari); color: var(--panell); font-weight: 600; }
+.btn-petit { padding: 6px 12px; }
+.btn[aria-pressed='true'] { background: var(--primari-clar); border-color: var(--primari); }
+
+.modes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.etapes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 0; margin-bottom: 10px; padding: 0; list-style: none; font-size: 0.9em; }
+.etapes li { padding: 4px 10px; border: 1px solid var(--vora-panell); border-radius: 999px; background: var(--panell); color: var(--text-suau); }
+.etapes li[aria-current='step'] { border: 2px solid var(--primari); color: var(--text); font-weight: 600; }
+.etapes li.fet::after { content: ' ✓'; }
+
+/* Disposició: estreta = apilat; ample = escena a dalt, gràfica a l'esquerra, panell a la dreta */
+.principal { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.dreta { display: grid; gap: 16px; align-content: start; min-width: 0; }
+@media (min-width: 900px) {
+    .principal { grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr); grid-template-areas: 'escena escena' 'grafica dreta'; }
+    .zona-escena { grid-area: escena; }
+    .zona-grafica { grid-area: grafica; }
+    .dreta { grid-area: dreta; }
+}
+.zona-escena, .zona-grafica, .panell, .targeta, .registre-zona { background: var(--panell); border: 1px solid var(--vora-panell); border-radius: var(--radi); box-shadow: var(--ombra); padding: 8px; min-width: 0; }
+.panell, .targeta, .registre-zona { padding: 12px; }
+.escena { display: block; width: 100%; height: auto; max-height: 250px; }
+.zona-grafica { align-self: start; }
+.grafica { display: block; width: 100%; aspect-ratio: 16 / 10; touch-action: none; border-radius: 6px; }
+.grafica.arrossegable { cursor: ew-resize; }
+.grafica.seleccionable { cursor: pointer; }
+
+/* Instruments: dígits grans i tabulars, etiqueta i unitat sempre visibles */
+.instruments { display: grid; gap: 6px; margin-bottom: 10px; }
+.instrument { margin: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.et-instrument { color: var(--text-suau); font-size: 0.9em; }
+.valor { font-size: 1.7em; font-weight: 700; font-variant-numeric: tabular-nums; }
+.zona-velocimetre { margin: 8px 0; }
+.velocimetre { display: block; width: 100%; max-width: 260px; margin: 0 auto; }
+.botons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.controls { display: grid; gap: 8px; }
+.control-a { display: flex; align-items: center; gap: 6px; }
+.control-a input { width: 5.5em; min-height: 44px; text-align: center; border: 1px solid var(--vora-panell); border-radius: 8px; background: var(--fons); color: var(--text); font-variant-numeric: tabular-nums; }
+.control { display: flex; align-items: center; gap: 8px; }
+.control select { min-height: 44px; border: 1px solid var(--vora-panell); border-radius: 8px; background: var(--fons); color: var(--text); padding: 4px 8px; }
+.control label { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+
+.instruccio { margin: 0 0 8px; font-size: 1.05em; font-weight: 600; }
+.feedback { min-height: 1.5em; margin-bottom: 8px; }
+.feedback p { margin: 0 0 6px; padding: 8px 10px; border-radius: 8px; border-left: 5px solid var(--info); background: var(--info-fons); }
+.feedback p.ok { border-left-color: var(--be); background: var(--be-fons); }
+.feedback p.error { border-left-color: var(--error); background: var(--error-fons); }
+.feedback p.ok::before { content: '✓ '; font-weight: 700; }
+.feedback p.error::before { content: '✗ '; font-weight: 700; }
+.accions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.p1-botons, .estimacio { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+.estimacio input { width: 7em; min-height: 44px; text-align: center; border: 1px solid var(--vora-panell); border-radius: 8px; background: var(--fons); color: var(--text); }
+.bellesa { margin: 8px 0; }
+.bellesa-llista { margin: 8px 0; padding-left: 1.4em; font-variant-numeric: tabular-nums; }
+.bellesa-llista li.precis { font-style: italic; }
+.definicio { margin-top: 8px; padding: 10px 12px; border: 2px solid var(--primari); border-radius: var(--radi); background: var(--primari-clar); }
+.definicio p { margin: 0 0 6px; }
+
+.registre-zona h2 { margin: 0 0 6px; font-size: 1.1em; }
+.registre { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.registre th, .registre td { padding: 4px 6px; text-align: right; border-bottom: 1px solid var(--vora-panell); }
+.registre input { width: 6em; min-height: 36px; text-align: right; border: 1px solid var(--vora-panell); border-radius: 6px; background: var(--fons); color: var(--text); }
+.registre input[aria-invalid='true'] { border: 2px dashed var(--error); }
+.registre input:read-only { border-style: solid; border-color: var(--be); }
+.marca-fila { display: inline-block; min-width: 1.2em; font-weight: 700; }
+.marca-fila.ok { color: var(--be); }
+.marca-fila.error { color: var(--error); }
+
+.peu { margin-top: 24px; font-size: 0.85em; color: var(--text-suau); }
+
+/* Escena SVG */
+.t-fons.t-llis { fill: var(--d-t-llis); }
+.t-fons.t-gel { fill: var(--d-t-gel); }
+.t-fons.t-sorra { fill: var(--d-t-sorra); }
+.t-fons.t-pedres { fill: var(--d-t-pedres); }
+.t-fons.t-baixada { fill: var(--d-t-baixada); }
+.t-linia { stroke: var(--d-t-linia); fill: none; stroke-width: 1.4; stroke-linecap: round; }
+.t-punt { fill: var(--d-t-linia); }
+.t-pedra { fill: none; stroke: var(--d-t-linia); stroke-width: 1.2; }
+.t-vora { stroke: var(--d-t-linia); stroke-width: 2; }
+.t-nom { fill: var(--text); font-size: 12px; font-weight: 600; }
+.r-marca { stroke: var(--text-suau); stroke-width: 1.2; }
+.r-num, .et { fill: var(--text-suau); font-size: 11px; }
+.obs-cap { fill: var(--p-pell); stroke: var(--d-obs); stroke-width: 2; }
+.obs-cos { stroke: var(--d-obs); stroke-width: 3; stroke-linecap: round; }
+.obs-telemetre { fill: var(--d-obs); }
+.raig { stroke: var(--d-secant); stroke-width: 2; stroke-dasharray: 6 4; }
+.marca-a { stroke: var(--d-marcador); stroke-width: 2; stroke-dasharray: 4 3; }
+.marca-a-text { fill: var(--d-marcador); font-size: 13px; font-weight: 700; }
+.carreto-cos { fill: var(--d-carreto); stroke: var(--text); stroke-width: 1.5; }
+.carreto-carga { fill: var(--p-pell); stroke: var(--text); stroke-width: 1.2; }
+.carreto-roda { fill: var(--text); }
+.vel-arc { fill: none; stroke: var(--text-suau); stroke-width: 3; }
+.vel-marca { stroke: var(--text); stroke-width: 2; }
+.vel-num { fill: var(--text); font-size: 11px; }
+.vel-agulla { stroke: var(--error); stroke-width: 3; stroke-linecap: round; }
+.vel-eix { fill: var(--text); }
+.vel-lectura { fill: var(--text); font-size: 15px; font-weight: 700; }
+
+/* Mode projector */
+body.projector { font-size: 22px; }
+body.projector .principal { display: block; }
+body.projector .zona-grafica { margin-bottom: 16px; }
+body.projector .zona-escena { margin-bottom: 16px; }
+body.projector .dreta { margin-top: 16px; }
+body.projector .valor { font-size: 2.2em; }
+
+@media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+}
+
+/* Impressió: negre sobre blanc, A4, només gràfica + taula */
+@page { size: A4; margin: 15mm; }
+@media print {
+    body { background: #fff; color: #000; padding: 0; font-size: 12pt; }
+    .capcalera, .modes, .etapes, .zona-escena, .panell, .targeta, .peu, #anunci { display: none !important; }
+    .principal { display: block; max-width: none; }
+    .zona-grafica, .registre-zona { border: 0; box-shadow: none; padding: 0; background: #fff; }
+    .registre th, .registre td { border-bottom: 1px solid #000; color: #000; }
+    .registre input { border: 0; color: #000; background: #fff; }
+}

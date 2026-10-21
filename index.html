@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ca">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Derivada en un punt · Step Quiz</title>
+    <meta name="description" content="Descobreix què és la derivada d’una funció en un punt: la velocitat en un instant.">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/tokens.css?v=5f30a5b3">
+    <link rel="stylesheet" href="css/derivada.css?v=993534a2">
+</head>
+<body>
+    <header class="capcalera">
+        <h1>Derivada en un punt</h1>
+        <button type="button" class="btn btn-petit" id="btn-projector" aria-pressed="false">Projector</button>
+    </header>
+
+    <nav id="modes" class="modes" aria-label="Modes"></nav>
+    <ol id="etapes" class="etapes" aria-label="Ruta guiada"></ol>
+
+    <main class="principal">
+        <section class="zona-escena" id="zona-escena" aria-label="Escena">
+            <svg id="escena" class="escena" xmlns="http://www.w3.org/2000/svg"></svg>
+        </section>
+
+        <section class="zona-grafica" aria-label="Gràfica">
+            <canvas id="grafica" class="grafica" aria-label="Gràfica de la distància entre l’observador i el carretó (metres) segons el temps (segons)"></canvas>
+        </section>
+
+        <div class="dreta">
+            <section class="panell" id="panell" aria-label="Instruments">
+                <div class="instruments">
+                    <p class="instrument"><span class="et-instrument">Cronòmetre</span><span class="valor" id="v-cronometre">0,0 s</span></p>
+                    <p class="instrument"><span class="et-instrument">Distància recorreguda des d’a</span><span class="valor" id="v-comptador">0,000 m</span></p>
+                    <p class="instrument"><span class="et-instrument">Distància a l’observador</span><span class="valor" id="v-observador">0,000 m</span></p>
+                </div>
+
+                <div id="zona-velocimetre" class="zona-velocimetre" hidden>
+                    <p class="et-instrument">Velocímetre</p>
+                    <svg id="velocimetre" class="velocimetre" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Velocímetre"></svg>
+                </div>
+
+                <div class="botons">
+                    <button type="button" class="btn btn-primari" id="btn-cronometre">Cronòmetre (Espai)</button>
+                    <button type="button" class="btn" id="btn-torna">Torna a a (S)</button>
+                </div>
+
+                <div class="controls">
+                    <div class="control-a">
+                        <label for="camp-a">a (s)</label>
+                        <button type="button" class="btn btn-petit" id="a-menys" aria-label="a, 0,1 s menys">−</button>
+                        <input type="text" id="camp-a" inputmode="decimal" autocomplete="off" value="0,0">
+                        <button type="button" class="btn btn-petit" id="a-mes" aria-label="a, 0,1 s més">+</button>
+                    </div>
+                    <div class="control">
+                        <label for="tria-preset">Temps programat</label>
+                        <select id="tria-preset"></select>
+                    </div>
+                    <div class="control" id="control-escenari" hidden>
+                        <label for="tria-escenari">Escenari</label>
+                        <select id="tria-escenari"></select>
+                    </div>
+                    <div class="control" id="control-velocimetre" hidden>
+                        <label><input type="checkbox" id="interruptor-velocimetre"> Mostra el velocímetre</label>
+                    </div>
+                </div>
+            </section>
+
+            <section class="targeta" id="targeta" aria-label="Instruccions">
+                <p id="instruccio" class="instruccio"></p>
+                <div id="feedback" class="feedback" aria-live="polite"></div>
+
+                <div id="p1-botons" class="p1-botons" hidden></div>
+
+                <div id="estimacio" class="estimacio" hidden>
+                    <label for="camp-estimacio" id="et-estimacio"></label>
+                    <input type="text" id="camp-estimacio" inputmode="decimal" autocomplete="off">
+                    <button type="button" class="btn btn-primari" id="btn-estimacio">Comprova</button>
+                </div>
+
+                <div id="bellesa" class="bellesa" hidden>
+                    <p id="bellesa-valor"></p>
+                    <p id="bellesa-cotxe" class="suau"></p>
+                    <ol id="bellesa-llista" class="bellesa-llista"></ol>
+                    <button type="button" class="btn" id="btn-fotograma" hidden>Següent valor de t</button>
+                    <div id="definicio" class="definicio" hidden>
+                        <p id="definicio-1"></p>
+                        <p id="definicio-2"></p>
+                    </div>
+                </div>
+
+                <div id="accions" class="accions"></div>
+                <p><button type="button" class="btn btn-petit" id="btn-per-que">Per què no pot ser t = 0?</button></p>
+            </section>
+
+            <section class="registre-zona" id="registre-zona" aria-label="Mesures">
+                <h2>Mesures</h2>
+                <p id="registre-buit" class="suau">Encara no has mesurat res. Prem Espai per començar.</p>
+                <table id="registre" class="registre" hidden>
+                    <thead>
+                        <tr><th scope="col">a (s)</th><th scope="col">t (s)</th><th scope="col">d (m)</th><th scope="col">TVM (m/s)</th></tr>
+                    </thead>
+                    <tbody id="registre-cos"></tbody>
+                </table>
+            </section>
+        </div>
+    </main>
+    <div id="anunci" class="sr" aria-live="polite"></div>
+
+    <footer class="peu">
+        <p>
+            <button type="button" class="btn btn-petit" id="btn-esborra-progres">Esborra el progrés</button>
+            Res del que fas surt d’aquest ordinador: el progrés només es desa en aquest navegador.
+        </p>
+        <p>
+            Material desenvolupat per David Arso Civil per al Departament de Matemàtiques de l’INS Miquel Tarradell.
+            Contingut sota CC BY-NC-SA 4.0, codi sota llicència MIT. <a href="LLICENCIA.md">Llicència</a>.
+        </p>
+    </footer>
+
+    <script src="data/escenaris.js?v=954f485b"></script>
+    <script src="js/motor/atzar.js?v=2996d29a"></script>
+    <script src="js/motor/perfil.js?v=7aedd12d"></script>
+    <script src="js/motor/tvm.js?v=6dfc077b"></script>
+    <script src="js/motor/terreny.js?v=a50f4b37"></script>
+    <script src="js/motor/entrada.js?v=298e3ec9"></script>
+    <script src="js/motor/laboratori.js?v=b95c0c10"></script>
+    <script src="js/motor/exercicis.js?v=7190ab78"></script>
+    <script src="js/ui/textos.js?v=8ac9506e"></script>
+    <script src="js/ui/escena.js?v=9e45e4e1"></script>
+    <script src="js/ui/grafica.js?v=175288f9"></script>
+    <script src="js/ui/velocimetre.js?v=116aa305"></script>
+    <script src="js/ui/app.js?v=8bdf3466"></script>
+</body>
+</html>
