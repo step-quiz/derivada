@@ -1,0 +1,78 @@
+name: Extract and commit zip uploads
+
+on:
+  push:
+    paths:
+      - '_uploads/**.zip'
+      - '_uploads/**.ZIP'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: unzip-uploads-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Posa la branca al dia
+        run: git pull --ff-only origin "${GITHUB_REF_NAME}"
+
+      - name: Descomprimeix els ZIP de _uploads/
+        run: |
+          shopt -s nullglob nocaseglob
+          zips=(_uploads/*.zip)
+          if [ ${#zips[@]} -eq 0 ]; then
+            echo "No hi ha cap ZIP a _uploads/."
+            exit 0
+          fi
+          for z in "${zips[@]}"; do
+            echo "::group::$z"
+            if unzip -Z1 "$z" 2>/dev/null | grep -q '^\.github/'; then
+              echo "::warning::$z porta fitxers de .github/: s'ignoren (els workflows es canvien des de la web de GitHub)."
+            fi
+            rc=0
+            unzip -o "$z" -d . -x '.github/*' '__MACOSX/*' '*.DS_Store' || rc=$?
+            if [ "$rc" -gt 1 ]; then
+              echo "::error::No s'ha pogut descomprimir $z (codi $rc): es treu de _uploads/ sense desar-ne res. Torna a generar el ZIP i puja'l."
+              echo "$z" >> "$RUNNER_TEMP/zips-trencats.txt"
+            fi
+            rm -- "$z"
+            echo "::endgroup::"
+          done
+
+      - name: Desa els canvis
+        id: desa
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No hi ha res a desar."
+            exit 0
+          fi
+          git commit -q -m "Auto-extract uploaded zip"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          echo "desat=true" >> "$GITHUB_OUTPUT"
+          git diff --name-only HEAD~1 HEAD | sed 's/^/  /'
+
+      - name: Llança les proves (tests.yml)
+        if: steps.desa.outputs.desat == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run tests.yml --ref "$GITHUB_REF_NAME"
+
+      - name: Comprova que cap ZIP no estigués trencat
+        run: |
+          if [ -s "$RUNNER_TEMP/zips-trencats.txt" ]; then
+            echo "::error::Aquests ZIP estaven trencats i no s'han aplicat: $(tr '\n' ' ' < "$RUNNER_TEMP/zips-trencats.txt")"
+            exit 1
+          fi
